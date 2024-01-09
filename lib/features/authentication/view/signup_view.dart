@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../resourses/color.dart';
+import '../../../resourses/font.dart';
+import '../../../utils/routes/routes_name.dart';
+import '../../../utils/utils.dart';
+import '../view_model/auth_view_model.dart';
+import '../../../widgets/app_text_field.dart';
+import '../../../widgets/round_button.dart';
+
+class SignUpView extends StatefulWidget {
+  const SignUpView({Key? key}) : super(key: key);
+
+  @override
+  State<SignUpView> createState() => _SignUpViewState();
+}
+
+class _SignUpViewState extends State<SignUpView> {
+  @override
+  void dispose() {
+    var prov = Provider.of<AuthViewModel>(context, listen: false);
+    prov.disposeData();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height * 1;
+    final width = MediaQuery.of(context).size.width * 1;
+
+    return Consumer<AuthViewModel>(builder: (context, prov, _) {
+      return Scaffold(
+          appBar: _buildAppBar(),
+          body: SafeArea(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: width * .04),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: height / 15),
+                        Image.asset("assets/images/app_logo.png",
+                            height: height / 9),
+                        SizedBox(height: height / 15),
+                        AppTextFiled(
+                          hintText: "Email",
+                          labelText: "Email",
+                          controller: prov.emailController,
+                          focusNode: prov.emailFocusNode,
+                          keyboardType: TextInputType.emailAddress,
+                          onFieldSubmitted: (value) {
+                            Utils.filedFocusChange(
+                                prov.emailFocusNode, prov.passwordFocusNode);
+                          },
+                        ),
+                        SizedBox(
+                          height: height * .03,
+                        ),
+                        ValueListenableBuilder(
+                            valueListenable: prov.obsecurePassword,
+                            builder: (context, value, child) {
+                              return AppTextFiled(
+                                  controller: prov.passWordController,
+                                  focusNode: prov.passwordFocusNode,
+                                  prefixIcon: Icon(Icons.lock),
+                                  suffixIcon: InkWell(
+                                      onTap: () {
+                                        prov.obsecurePassword.value =
+                                            !prov.obsecurePassword.value;
+                                      },
+                                      child: Icon(prov.obsecurePassword.value
+                                          ? Icons.visibility_off
+                                          : Icons.visibility)),
+                                  obsecureText: prov.obsecurePassword.value,
+                                  hintText: "Password",
+                                  labelText: "Password");
+                            }),
+                        SizedBox(
+                          height: height * .1,
+                        ),
+                        AppButton(
+                            title: "Sign Up",
+                            loading: prov.loading,
+                            onPress: () {
+                              prov.validateForm().then((value) {
+                                Map<dynamic, String> data = {
+                                  "email": prov.emailController.text,
+                                  "password": prov.passWordController.text
+                                };
+
+                                // Map<dynamic, String> data = {
+                                //   "email": "eve.holt@reqres.in",
+                                //   "password": "adadadadadadadadadad"
+                                // };
+                                prov.signUpApi(data);
+                              });
+                            }),
+                        SizedBox(
+                          height: height * .01,
+                        ),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, RoutesName.login);
+                            },
+                            child: Text(
+                              "Already have an account? Login.",
+                              style: RobotoFonts.medium(fontSize: 15),
+                            ))
+                      ],
+                    ),
+                  ))));
+    });
+  }
+
+  _buildAppBar() {
+    return AppBar(
+        automaticallyImplyLeading: false,
+        title: Text("Signup",
+            style:
+                RobotoFonts.bold(fontSize: 25, color: AppColor.primaryLight)),
+        centerTitle: true,
+        backgroundColor: AppColor.primary);
+  }
+}
